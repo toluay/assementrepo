@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vector-consumer-config
+  namespace: logging
+data:
+  vector.toml: |
+    [sources.kafka_in]
+    type = "kafka"
+    bootstrap_servers = "kafka.logging.svc.cluster.local:9092"
+    topics = ["app-logs"]
+    group_id = "log-ingestor"
+    decoding.codec = "json"
+
+    [sinks.elasticsearch]
+    type = "elasticsearch"
+    inputs = ["kafka_in"]
+    endpoints = ["https://elasticsearch-es-http.logging.svc.cluster.local:9200"]
+    mode = "bulk"
+    bulk.index = "app-logs-%Y.%m.%d"
+
+    [sinks.elasticsearch.auth]
+    strategy = "basic"
+    user = "elastic"
+    password = "${ELASTIC_PASSWORD}"
+
+    [sinks.elasticsearch.tls]
+    verify_certificate = false
+    verify_hostname = false

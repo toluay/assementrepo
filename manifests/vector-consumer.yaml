@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vector-consumer
+  namespace: logging
+  labels:
+    app: vector-consumer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vector-consumer
+  template:
+    metadata:
+      labels:
+        app: vector-consumer
+    spec:
+      containers:
+        - name: vector
+          image: timberio/vector:0.41.1-alpine
+          args: ["--config", "/etc/vector/vector.toml"]
+          env:
+            - name: ELASTIC_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: elasticsearch-es-elastic-user
+                  key: elastic
+          resources:
+            requests:
+              memory: 128Mi
+              cpu: 100m
+            limits:
+              memory: 256Mi
+              cpu: 200m
+          volumeMounts:
+            - name: config
+              mountPath: /etc/vector
+      volumes:
+        - name: config
+          configMap:
+            name: vector-consumer-config

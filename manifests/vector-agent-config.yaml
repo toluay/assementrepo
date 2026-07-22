@@ -1,0 +1,35 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vector-agent-config
+  namespace: logging
+data:
+  vector.toml: |
+    [sources.k8s_logs]
+    type = "kubernetes_logs"
+    extra_namespace_label_selector = "logging"
+
+    [transforms.only_producer]
+    type = "filter"
+    inputs = ["k8s_logs"]
+    condition = '.kubernetes.container_name == "log-producer"'
+
+    [transforms.parse_json]
+    type = "remap"
+    inputs = ["only_producer"]
+    source = '''
+    parsed, err = parse_json(.message)
+    if err == null {
+      . = merge!(., parsed)
+    }
+    if exists(.timestamp) {
+      ."@timestamp" = .timestamp
+    }
+    '''
+
+    [sinks.kafka]
+    type = "kafka"
+    inputs = ["parse_json"]
+    bootstrap_servers = "kafka.logging.svc.cluster.local:9092"
+    topic = "app-logs"
+    encoding.codec = "json"

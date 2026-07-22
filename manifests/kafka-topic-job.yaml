@@ -1,0 +1,26 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: create-app-logs-topic
+  namespace: logging
+spec:
+  ttlSecondsAfterFinished: 300
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: kafka
+          image: docker.io/bitnamilegacy/kafka:4.0.0-debian-12-r10
+          command:
+            - /bin/bash
+            - -ec
+            - |
+              kafka-topics.sh \
+                --bootstrap-server kafka.logging.svc.cluster.local:9092 \
+                --create --if-not-exists \
+                --topic app-logs \
+                --partitions 3 \
+                --replication-factor 1
+              kafka-topics.sh \
+                --bootstrap-server kafka.logging.svc.cluster.local:9092 \
+                --list

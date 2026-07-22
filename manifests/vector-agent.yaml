@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: vector-agent
+  namespace: logging
+  labels:
+    app: vector-agent
+spec:
+  selector:
+    matchLabels:
+      app: vector-agent
+  template:
+    metadata:
+      labels:
+        app: vector-agent
+    spec:
+      serviceAccountName: vector-agent
+      containers:
+        - name: vector
+          image: timberio/vector:0.41.1-alpine
+          args: ["--config", "/etc/vector/vector.toml"]
+          resources:
+            requests:
+              memory: 128Mi
+              cpu: 100m
+            limits:
+              memory: 256Mi
+              cpu: 200m
+          volumeMounts:
+            - name: config
+              mountPath: /etc/vector
+            - name: var-log
+              mountPath: /var/log/
+              readOnly: true
+            - name: var-lib
+              mountPath: /var/lib/
+              readOnly: true
+      volumes:
+        - name: config
+          configMap:
+            name: vector-agent-config
+        - name: var-log
+          hostPath:
+            path: /var/log/
+        - name: var-lib
+          hostPath:
+            path: /var/lib/
