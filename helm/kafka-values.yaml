@@ -1,12 +1,40 @@
-replicaCount: 1
+# Bitnami moved images to bitnamilegacy
+global:
+  security:
+    allowInsecureImages: true   # required when using bitnamilegacy
+
+image:
+  repository: bitnamilegacy/kafka
+
+defaultInitContainers:
+  volumePermissions:
+    image:
+      repository: bitnamilegacy/os-shell
+  autoDiscovery:
+    image:
+      repository: bitnamilegacy/kubectl
+
+metrics:
+  jmx:
+    image:
+      repository: bitnamilegacy/jmx-exporter
+
+# Chart 32.x uses controller/broker keys — NOT top-level replicaCount
+controller:
+  replicaCount: 1
+  persistence:
+    enabled: true
+    size: 2Gi
+  resources:
+    requests:
+      memory: 512Mi
+
+broker:
+  replicaCount: 0   # combined controller+broker mode (good for local dev)
+
 kraft:
   enabled: true
+
 listeners:
   client:
     protocol: PLAINTEXT
-persistence:
-  enabled: true
-  size: 2Gi
-resources:
-  requests:
-    memory: 512Mi
